@@ -7,6 +7,9 @@ const notes = ["C2", "G3", "E4", "C3", "A4", "F3", "G4", "E2"];
 
 const higherNotes = ["C5", "E5", "G5"];
 
+// for performance
+Tone.Context.lookAhead = 0;
+
 // CONSTRUCT INSTRUMENTS
 const ls = new LushSynth();
 const lsH = new LushSynth();
@@ -29,17 +32,17 @@ const loop = new Tone.Loop(time => {
 
 const loop2 = new Tone.Loop(time => {
     console.log('loop2');
-}, "2m").start(0);
+}, "2m");
 
 const play = () => {
-    Tone.Transport.start();
+    Tone.Transport.start("+0.1");
+    loop.start();
     // grainplayer.start();
 }
 
 const getState = () => {
     console.log(grainplayer.state);
     const time = new Tone.Time(0);
-    loop.start(time);
     loop2.stop();
 }
 
