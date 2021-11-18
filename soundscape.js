@@ -14,8 +14,9 @@ Tone.Context.lookAhead = 0;
 const ls = new LushSynth();
 const lsH = new LushSynth();
 
-const loop = new Tone.Loop(time => {
+const synthLoop = new Tone.Loop(time => {
     ls.stop();
+    console.log(Tone.now());
     const n1 = notes[Math.floor(Math.random()*notes.length)];
     const n2 = notes[Math.floor(Math.random()*notes.length)];
     const n3 = notes[Math.floor(Math.random()*notes.length)];
@@ -27,23 +28,64 @@ const loop = new Tone.Loop(time => {
         lsH.playRelease(higherNotes[Math.floor(Math.random()*higherNotes.length)], "1m", time);
     }
 
-    ls.play([n1, n2, n3], time);
+    ls.playRelease([n1, n2, n3], "4m", time);
 }, "4m");
+
+synthLoop.probability = 0.6;
+
+console.log(synthLoop);
+
+let lanes = [];
+let synthLane = {isPlaying: false, loop: synthLoop, prob: 0.5, probInc: 0.01}; 
+lanes.push(synthLane);
 
 const loop2 = new Tone.Loop(time => {
     console.log('loop2');
 }, "2m");
 
+const mainTransportLoop = new Tone.Loop(time => {
+    lanes.forEach(lane => {
+        const r = Math.random();
+        console.log(r);
+        console.log("prob", lane.prob);
+        if (!lane.isPlaying) {
+            lane.prob += lane.probInc;
+            if (r < lane.prob) {
+                console.log("playing loop");
+                lane.loop.start(time);
+                lane.isPlaying = true;
+                lane.prob = 0;
+            }
+        }
+        else if (lane.isPlaying) {
+            lane.prob += lane.probInc;
+            if (r < lane.prob) {
+                console.log("stopping loop");
+                lane.loop.stop();
+                lane.isPlaying = false;
+                lane.prob = 0;
+            }
+        }
+
+    });
+}, "1m");
+
 const play = () => {
-    Tone.Transport.start("+0.1");
-    loop.start();
+    if (Tone.Transport.state != "started"){
+        Tone.Transport.start("+0.1");
+    }
+    console.log(Tone.now());
+    synthLoop.start();
+    
     // grainplayer.start();
 }
 
+const stop = () => {
+    synthLoop.stop();
+}
+
 const getState = () => {
-    console.log(grainplayer.state);
-    const time = new Tone.Time(0);
-    loop2.stop();
+    console.log(synthLoop.state);
 }
 
 const playLushSynths = (notes) => {
