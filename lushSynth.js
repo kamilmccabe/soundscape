@@ -1,6 +1,6 @@
 class LushSynth {
 
-    constructor() {
+    constructor(vol = 0) {
 
         const reverb = new Tone.Reverb({
             decay: 10,
@@ -9,7 +9,7 @@ class LushSynth {
 
         const filter = new Tone.Filter(750, "lowpass");
 
-        this.vol = 0;
+        this.vol = vol;
 
         this.synthChannel = new Tone.Channel(this.vol, 0).chain(filter, reverb);
         this.leftChannel = new Tone.Channel(this.vol, -1).chain(filter, reverb);

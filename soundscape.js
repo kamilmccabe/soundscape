@@ -1,8 +1,5 @@
 
-const grainplayer = new Tone.GrainPlayer("/samples/C4.wav").toDestination();
-grainplayer.playbackRate = 1;
-grainplayer.grainSize = 0.1;
-
+const cMajScale = ["C", "D", "E", "G", "A"];
 const notes = ["C2", "G3", "E4", "C3", "A4", "F3", "G4", "E2"];
 
 const higherNotes = ["C5", "E5", "G5"];
@@ -10,13 +7,45 @@ const higherNotes = ["C5", "E5", "G5"];
 // for performance
 Tone.Context.lookAhead = 0;
 
-// CONSTRUCT INSTRUMENTS
+
+// FIELD RECORDINGS
+const grainplayer = new Tone.GrainPlayer("/samples/field_recordings/deansgate1.wav").toDestination();
+grainplayer.playbackRate = 1;
+grainplayer.grainSize = 0.01;
+grainplayer.volume.value = -25;
+
+// PIANO
+
+const reverb = new Tone.Reverb({
+    decay: 5,
+    wet: 0.6
+}).toDestination();
+
+const feedbackDelay = new Tone.FeedbackDelay("4tn", 0.2).connect(reverb);
+
+const filter = new Tone.Filter(500, "lowpass").connect(feedbackDelay);
+
+const piano = new Tone.Sampler({
+    urls: {
+        C3: "C3.wav",
+        C4: "C4.wav",
+        C5: "C5.wav",
+        G3: "G3.wav",
+        G4: "G4.wav",
+        G5: "G5.wav",
+    },
+    baseUrl: "samples/",
+    volume: 0
+}).connect(filter);
+
+
+// CONSTRUCT SYNTHS
 const ls = new LushSynth();
 const lsH = new LushSynth();
+const lsDrone = new LushSynth(-20);
 
 const synthLoop = new Tone.Loop(time => {
     ls.stop();
-    console.log(Tone.now());
     const n1 = notes[Math.floor(Math.random()*notes.length)];
     const n2 = notes[Math.floor(Math.random()*notes.length)];
     const n3 = notes[Math.floor(Math.random()*notes.length)];
@@ -31,27 +60,38 @@ const synthLoop = new Tone.Loop(time => {
     ls.playRelease([n1, n2, n3], "4m", time);
 }, "4m");
 
-synthLoop.probability = 0.6;
-
-console.log(synthLoop);
+//synthLoop.probability = 0.6;
+let pianoProb = Math.random();
+let probChange = Tone.now();
+console.log(probChange);
+const pianoLoop = new Tone.Loop(time => {
+    if (Math.random() < pianoProb) {
+        const delay = Math.random() / 2;
+        const vel = Math.random();
+        const n1 = cMajScale[Math.floor(Math.random()*cMajScale.length)] + randomIntFromInterval(3,6);
+        console.log("Piano notes ", n1);
+        piano.triggerAttackRelease(n1, "1m", time + delay, vel);
+    }
+}, "2n");
 
 let lanes = [];
 let synthLane = {isPlaying: false, loop: synthLoop, prob: 0.5, probInc: 0.01}; 
+let dgLane = {isPlaying: false, loop: grainplayer, prob: 0.5, probInc: 0.01}; 
 lanes.push(synthLane);
+lanes.push(dgLane);
 
 const loop2 = new Tone.Loop(time => {
     console.log('loop2');
 }, "2m");
 
 const mainTransportLoop = new Tone.Loop(time => {
+
     lanes.forEach(lane => {
         const r = Math.random();
         console.log(r);
-        console.log("prob", lane.prob);
         if (!lane.isPlaying) {
             lane.prob += lane.probInc;
             if (r < lane.prob) {
-                console.log("playing loop");
                 lane.loop.start(time);
                 lane.isPlaying = true;
                 lane.prob = 0;
@@ -60,7 +100,6 @@ const mainTransportLoop = new Tone.Loop(time => {
         else if (lane.isPlaying) {
             lane.prob += lane.probInc;
             if (r < lane.prob) {
-                console.log("stopping loop");
                 lane.loop.stop();
                 lane.isPlaying = false;
                 lane.prob = 0;
@@ -68,14 +107,24 @@ const mainTransportLoop = new Tone.Loop(time => {
         }
 
     });
+
+    // update probabilityt change after every n seconds
+    if (Tone.now() - probChange > 20) {
+        console.log('change prob');
+        probChange = Tone.now();
+        pianoProb = Math.random();
+        console.log(pianoProb);
+    }
 }, "1m");
 
 const play = () => {
     if (Tone.Transport.state != "started"){
         Tone.Transport.start("+0.1");
     }
-    console.log(Tone.now());
-    synthLoop.start();
+    // Play the drone
+    lsDrone.play(["C1", "G2"], 0);
+    pianoLoop.start();
+    mainTransportLoop.start();
     
     // grainplayer.start();
 }
@@ -90,4 +139,8 @@ const getState = () => {
 
 const playLushSynths = (notes) => {
     
+}
+
+const randomIntFromInterval = (min, max) => { // min and max included 
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
