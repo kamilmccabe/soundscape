@@ -40,24 +40,27 @@ const piano = new Tone.Sampler({
 
 
 // CONSTRUCT SYNTHS
-const ls = new LushSynth();
-const lsH = new LushSynth();
+const ls = new LushSynth(-10);
+const lsH = new LushSynth(-10);
 const lsDrone = new LushSynth(-20);
 
+let lsProb = Math.random();
 const synthLoop = new Tone.Loop(time => {
-    ls.stop();
-    const n1 = notes[Math.floor(Math.random()*notes.length)];
-    const n2 = notes[Math.floor(Math.random()*notes.length)];
-    const n3 = notes[Math.floor(Math.random()*notes.length)];
-    console.log(n1, n2, n3);
+    if (Math.random() < lsProb) {
+        ls.stop();
+        const n1 = notes[Math.floor(Math.random() * notes.length)];
+        const n2 = notes[Math.floor(Math.random() * notes.length)];
+        const n3 = notes[Math.floor(Math.random() * notes.length)];
+        console.log(n1, n2, n3);
 
-    if (Math.random() > 0.8) {
-        console.log("higher playing");
-        lsH.stop()
-        lsH.playRelease(higherNotes[Math.floor(Math.random()*higherNotes.length)], "1m", time);
+        if (Math.random() > 0.8) {
+            console.log("higher playing");
+            lsH.stop()
+            lsH.playRelease(higherNotes[Math.floor(Math.random() * higherNotes.length)], "1m", time);
+        }
+
+        ls.playRelease([n1, n2, n3], "4m", time);
     }
-
-    ls.playRelease([n1, n2, n3], "4m", time);
 }, "4m");
 
 //synthLoop.probability = 0.6;
@@ -75,9 +78,9 @@ const pianoLoop = new Tone.Loop(time => {
 }, "2n");
 
 let lanes = [];
-let synthLane = {isPlaying: false, loop: synthLoop, prob: 0.5, probInc: 0.01}; 
+//let synthLane = {isPlaying: false, loop: synthLoop, prob: 0.5, probInc: 0.01}; 
 let dgLane = {isPlaying: false, loop: grainplayer, prob: 0.5, probInc: 0.01}; 
-lanes.push(synthLane);
+//lanes.push(synthLane);
 lanes.push(dgLane);
 
 const loop2 = new Tone.Loop(time => {
@@ -113,6 +116,7 @@ const mainTransportLoop = new Tone.Loop(time => {
         console.log('change prob');
         probChange = Tone.now();
         pianoProb = Math.random();
+        lsProb = Math.random();
         console.log(pianoProb);
     }
 }, "1m");
@@ -123,6 +127,7 @@ const play = () => {
     }
     // Play the drone
     lsDrone.play(["C1", "G2"], 0);
+    synthLoop.start();
     pianoLoop.start();
     mainTransportLoop.start();
     
