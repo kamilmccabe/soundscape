@@ -9,22 +9,31 @@ Tone.Context.lookAhead = 0;
 
 
 // FIELD RECORDINGS
-const grainplayer = new Tone.GrainPlayer("/samples/field_recordings/deansgate1.wav").toDestination();
-grainplayer.playbackRate = 1;
-grainplayer.grainSize = 0.01;
-grainplayer.volume.value = -25;
+const leftChannel = new Tone.Channel(0, -1).toDestination();
+const rightChannel = new Tone.Channel(0, 1).toDestination();
+
+const probInc = 0.01;
+let lanes = [];
+
+for (let i = 1; i < 6; i++) {
+    const fr = new Lane(`/samples/field_recordings/deansgate0${i}.wav`, Math.random() * 2, 10, -25, 0.01);
+    if (Math.random() > 0.5) {
+        fr.grainplayer.connect(leftChannel);
+    }
+    else {
+        fr.grainplayer.connect(rightChannel);
+    }
+    lanes.push(fr);
+}
+
 
 // PIANO
-
 const reverb = new Tone.Reverb({
     decay: 5,
     wet: 0.6
 }).toDestination();
-
 const feedbackDelay = new Tone.FeedbackDelay("4tn", 0.2).connect(reverb);
-
 const filter = new Tone.Filter(500, "lowpass").connect(feedbackDelay);
-
 const piano = new Tone.Sampler({
     urls: {
         C3: "C3.wav",
@@ -44,7 +53,7 @@ const ls = new LushSynth(-10);
 const lsH = new LushSynth(-10);
 const lsDrone = new LushSynth(-20);
 
-let lsProb = Math.random();
+let lsProb = 0.7;
 const synthLoop = new Tone.Loop(time => {
     if (Math.random() < lsProb) {
         ls.stop();
@@ -77,11 +86,7 @@ const pianoLoop = new Tone.Loop(time => {
     }
 }, "2n");
 
-let lanes = [];
-//let synthLane = {isPlaying: false, loop: synthLoop, prob: 0.5, probInc: 0.01}; 
-let dgLane = {isPlaying: false, loop: grainplayer, prob: 0.5, probInc: 0.01}; 
-//lanes.push(synthLane);
-lanes.push(dgLane);
+
 
 const loop2 = new Tone.Loop(time => {
     console.log('loop2');
@@ -93,33 +98,32 @@ const mainTransportLoop = new Tone.Loop(time => {
         const r = Math.random();
         console.log(r);
         if (!lane.isPlaying) {
-            lane.prob += lane.probInc;
+            lane.prob += probInc;
             if (r < lane.prob) {
-                lane.loop.start(time);
+                lane.grainplayer.start(time);
                 lane.isPlaying = true;
                 lane.prob = 0;
             }
         }
         else if (lane.isPlaying) {
-            lane.prob += lane.probInc;
+            lane.prob += probInc * 1.5;
             if (r < lane.prob) {
-                lane.loop.stop();
+                lane.grainplayer.stop();
                 lane.isPlaying = false;
                 lane.prob = 0;
+                lane.grainplayer.playbackRate = Math.random() * 2;
             }
         }
 
     });
 
-    // update probabilityt change after every n seconds
+    // update probability change after every n seconds
     if (Tone.now() - probChange > 20) {
-        console.log('change prob');
         probChange = Tone.now();
         pianoProb = Math.random();
-        lsProb = Math.random();
-        console.log(pianoProb);
+        lsProb = Math.random() > 0.5 ? 0.7 : 0;
     }
-}, "1m");
+}, "4m");
 
 const play = () => {
     if (Tone.Transport.state != "started"){
