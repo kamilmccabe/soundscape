@@ -12,6 +12,10 @@ Tone.Context.lookAhead = 0;
 const leftChannel = new Tone.Channel(0, -1).toDestination();
 const rightChannel = new Tone.Channel(0, 1).toDestination();
 
+// dest connects to recorder
+leftChannel.connect(dest);
+rightChannel.connect(dest);
+
 const probInc = 0.01;
 let lanes = [];
 
@@ -32,6 +36,7 @@ const reverb = new Tone.Reverb({
     decay: 5,
     wet: 0.6
 }).toDestination();
+reverb.connect(dest);
 const feedbackDelay = new Tone.FeedbackDelay("4tn", 0.2).connect(reverb);
 const filter = new Tone.Filter(500, "lowpass").connect(feedbackDelay);
 const piano = new Tone.Sampler({
@@ -126,6 +131,7 @@ const mainTransportLoop = new Tone.Loop(time => {
 }, "4m");
 
 const play = () => {
+    recorder.start();
     if (Tone.Transport.state != "started"){
         Tone.Transport.start("+0.1");
     }
@@ -139,7 +145,12 @@ const play = () => {
 }
 
 const stop = () => {
+    lsDrone.stop()
     synthLoop.stop();
+    pianoLoop.stop();
+    mainTransportLoop.stop();
+    Tone.Transport.stop();
+    recorder.stop();
 }
 
 const getState = () => {

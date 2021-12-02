@@ -7,6 +7,8 @@ class LushSynth {
             wet: 1
         }).toDestination();
 
+        reverb.connect(dest);
+
         const filter = new Tone.Filter(750, "lowpass");
 
         this.vol = vol;
