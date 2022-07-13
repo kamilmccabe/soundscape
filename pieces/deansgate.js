@@ -64,7 +64,6 @@ const synthLoop = new Tone.Loop(time => {
         const n1 = notes[Math.floor(Math.random() * notes.length)];
         const n2 = notes[Math.floor(Math.random() * notes.length)];
         const n3 = notes[Math.floor(Math.random() * notes.length)];
-        console.log(n1, n2, n3);
 
         if (Math.random() > 0.8) {
             lsH.stop()
@@ -78,13 +77,12 @@ const synthLoop = new Tone.Loop(time => {
 //synthLoop.probability = 0.6;
 let pianoProb = Math.random();
 let probChange = Tone.now();
-console.log(probChange);
+
 const pianoLoop = new Tone.Loop(time => {
     if (Math.random() < pianoProb) {
         const delay = Math.random() / 2;
         const vel = Math.random();
         const n1 = cMajScale[Math.floor(Math.random()*cMajScale.length)] + randomIntFromInterval(3,6);
-        console.log("Piano notes ", n1);
         piano.triggerAttackRelease(n1, "1m", time + delay, vel);
     }
 }, "2n");
@@ -93,7 +91,6 @@ const pianoLoop = new Tone.Loop(time => {
 const mainTransportLoop = new Tone.Loop(time => {
     lanes.forEach(lane => {
         const r = Math.random();
-        console.log(r);
         if (!lane.isPlaying) {
             lane.prob += probInc;
             if (r < lane.prob) {
