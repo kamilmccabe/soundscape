@@ -7,7 +7,6 @@ const higherNotes = ["C5", "E5", "G5"];
 // for performance
 Tone.Context.lookAhead = 0;
 
-
 // FIELD RECORDINGS
 const leftChannel = new Tone.Channel(0, -1).toDestination();
 const rightChannel = new Tone.Channel(0, 1).toDestination();
@@ -68,7 +67,6 @@ const synthLoop = new Tone.Loop(time => {
         console.log(n1, n2, n3);
 
         if (Math.random() > 0.8) {
-            console.log("higher playing");
             lsH.stop()
             lsH.playRelease(higherNotes[Math.floor(Math.random() * higherNotes.length)], "1m", time);
         }
@@ -92,13 +90,7 @@ const pianoLoop = new Tone.Loop(time => {
 }, "2n");
 
 
-
-const loop2 = new Tone.Loop(time => {
-    console.log('loop2');
-}, "2m");
-
 const mainTransportLoop = new Tone.Loop(time => {
-
     lanes.forEach(lane => {
         const r = Math.random();
         console.log(r);
@@ -151,14 +143,6 @@ const stop = () => {
     mainTransportLoop.stop();
     Tone.Transport.stop();
     recorder.stop();
-}
-
-const getState = () => {
-    console.log(synthLoop.state);
-}
-
-const playLushSynths = (notes) => {
-    
 }
 
 const randomIntFromInterval = (min, max) => { // min and max included 
